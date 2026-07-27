@@ -2,7 +2,7 @@
 
 A tool that screens internship offers for common fraud patterns and explains *exactly* why an offer looks risky — in plain language, not a black-box score.
 
-**Live demo:** [Add your live link here once deployed]
+**Live demo:** [InternShield](https://bnvsaisridatta.github.io/InternShield/)]
 
 ---
 
