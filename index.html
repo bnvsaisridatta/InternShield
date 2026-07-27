@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InternShield — Spot the fake internship</title>
+<style>
+  :root{
+    --ink:#12213B;
+    --paper:#F6F5F1;
+    --danger:#E4572E;
+    --caution:#E9B44C;
+    --safe:#3E8E5A;
+    --slate:#5C6B7A;
+    --line: rgba(18,33,59,0.14);
+    --radius: 10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:760px;margin:0 auto;padding:32px 20px 80px;}
+
+  header.hero{margin-bottom:36px;}
+  .mark{
+    display:flex;align-items:center;gap:10px;margin-bottom:18px;
+  }
+  .mark svg{flex:none;}
+  .mark span{
+    font-family: ui-serif, Georgia, "Times New Roman", serif;
+    font-weight:700; font-size:22px; letter-spacing:-0.01em;
+  }
+  h1{
+    font-family: ui-serif, Georgia, "Times New Roman", serif;
+    font-weight:700;
+    font-size:clamp(28px,5vw,40px);
+    line-height:1.08;
+    margin:0 0 14px;
+    letter-spacing:-0.01em;
+  }
+  .lede{color:var(--slate); font-size:16px; max-width:56ch; margin:0;}
+
+  .steps{
+    display:flex; gap:18px; margin:28px 0 0; padding:0; list-style:none;
+    flex-wrap:wrap;
+  }
+  .steps li{
+    flex:1 1 160px;
+    border-top:2px solid var(--ink);
+    padding-top:10px;
+    font-size:13px;
+    color:var(--slate);
+  }
+  .steps b{display:block; color:var(--ink); font-size:14px; margin-bottom:2px;}
+
+  .card{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:24px;
+    margin-top:24px;
+  }
+  .card h2{
+    font-family: ui-serif, Georgia, serif;
+    font-size:19px; margin:0 0 4px;
+  }
+  .card .sub{color:var(--slate); font-size:13px; margin:0 0 20px;}
+
+  label{
+    display:block; font-size:13px; font-weight:600; margin:16px 0 6px;
+  }
+  label.first{margin-top:0;}
+  input[type=text], input[type=email], textarea{
+    width:100%; padding:10px 12px;
+    border:1px solid var(--line); border-radius:8px;
+    font-size:14px; font-family:inherit; color:var(--ink);
+    background:var(--paper);
+  }
+  textarea{min-height:110px; resize:vertical;}
+  input:focus, textarea:focus{outline:2px solid var(--ink); outline-offset:1px;}
+
+  .check-grid{
+    display:grid; grid-template-columns:1fr 1fr; gap:10px 18px; margin-top:16px;
+  }
+  @media (max-width:520px){ .check-grid{grid-template-columns:1fr;} }
+  .check-row{
+    display:flex; align-items:flex-start; gap:9px; font-size:13.5px;
+  }
+  .check-row input{width:auto; margin-top:3px; accent-color:var(--ink);}
+
+  button#analyzeBtn{
+    margin-top:22px;
+    background:var(--ink); color:var(--paper);
+    border:none; border-radius:8px;
+    padding:13px 22px; font-size:15px; font-weight:600;
+    cursor:pointer; width:100%;
+    font-family:inherit;
+  }
+  button#analyzeBtn:hover{background:#0c1729;}
+  button#analyzeBtn:focus-visible{outline:2px solid var(--danger); outline-offset:2px;}
+
+  #results{display:none; margin-top:24px;}
+  .verdict-row{
+    display:flex; align-items:center; gap:20px; flex-wrap:wrap;
+  }
+  .gauge-wrap{flex:none; position:relative; width:120px; height:120px;}
+  .gauge-num{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    flex-direction:column;
+  }
+  .gauge-num b{font-size:26px; line-height:1;}
+  .gauge-num span{font-size:10px; color:var(--slate); text-transform:uppercase; letter-spacing:.04em;}
+  .verdict-text{flex:1 1 240px;}
+  .verdict-label{
+    font-family: ui-serif, Georgia, serif; font-size:22px; font-weight:700; margin:0 0 4px;
+  }
+  .verdict-desc{font-size:14px; color:var(--slate); margin:0;}
+
+  .flags{margin-top:22px; padding-top:18px; border-top:1px solid var(--line);}
+  .flags h3{font-size:13px; text-transform:uppercase; letter-spacing:.05em; color:var(--slate); margin:0 0 12px;}
+  .flag-item{
+    display:flex; gap:10px; padding:10px 0; border-bottom:1px solid var(--line);
+    font-size:13.5px;
+  }
+  .flag-item:last-child{border-bottom:none;}
+  .flag-dot{
+    flex:none; width:8px; height:8px; border-radius:50%; margin-top:6px;
+  }
+  .flag-item b{display:block; margin-bottom:2px;}
+  .flag-item p{margin:0; color:var(--slate);}
+  .flag-weight{
+    flex:none; font-variant-numeric:tabular-nums; color:var(--slate); font-size:12px;
+  }
+  .no-flags{color:var(--safe); font-size:13.5px; padding:8px 0;}
+
+  .advice{
+    margin-top:18px; padding:14px 16px; background:var(--paper);
+    border-radius:8px; font-size:13.5px; color:var(--ink);
+  }
+
+  footer{margin-top:40px; font-size:12px; color:var(--slate); text-align:center;}
+  footer p{margin:2px 0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="mark">
+      <svg width="26" height="30" viewBox="0 0 26 30" fill="none">
+        <path d="M13 0L25 5V14C25 21.5 20 27 13 30C6 27 1 21.5 1 14V5L13 0Z" fill="#12213B"/>
+        <path d="M8 15L11.5 18.5L18 11" stroke="#F6F5F1" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>InternShield</span>
+    </div>
+    <h1>Spot the fake internship before it costs you.</h1>
+    <p class="lede">Paste in the details of an internship offer and get an instant, plain-language risk check — no account, no upload, nothing sent anywhere. Everything runs right here in your browser.</p>
+
+    <ul class="steps">
+      <li><b>1. Enter details</b>Fill in what the recruiter told you.</li>
+      <li><b>2. Instant scan</b>Checked against known fraud patterns.</li>
+      <li><b>3. Plain verdict</b>See exactly why, in plain words.</li>
+    </ul>
+  </header>
+
+  <div class="card">
+    <h2>Check an internship offer</h2>
+    <p class="sub">Fill in whatever you know — the more filled in, the more accurate the result.</p>
+
+    <label class="first" for="company">Company / organization name</label>
+    <input type="text" id="company" placeholder="e.g. Acme Technologies Pvt Ltd">
+
+    <label for="email">Recruiter's email address</label>
+    <input type="email" id="email" placeholder="e.g. hr@acmetech.com">
+
+    <label for="desc">Paste the job posting or message you received</label>
+    <textarea id="desc" placeholder="Paste the internship description, offer letter, or chat message here..."></textarea>
+
+    <div class="check-grid">
+      <label class="check-row"><input type="checkbox" id="c_fee"> Asked to pay a fee, deposit, or "refundable" caution money</label>
+      <label class="check-row"><input type="checkbox" id="c_personal"> Asked for bank details, card number, or ID upfront</label>
+      <label class="check-row"><input type="checkbox" id="c_nointerview"> Offered the role with no interview or screening</label>
+      <label class="check-row"><input type="checkbox" id="c_whatsapp"> Communication only via WhatsApp / Telegram, no official email</label>
+      <label class="check-row"><input type="checkbox" id="c_noweb"> Can't find a verifiable company website or LinkedIn page</label>
+      <label class="check-row"><input type="checkbox" id="c_urgent"> Pressured to respond or pay within hours</label>
+    </div>
+
+    <button id="analyzeBtn">Analyze this offer</button>
+  </div>
+
+  <div id="results" class="card">
+    <h2>Result</h2>
+    <div class="verdict-row">
+      <div class="gauge-wrap">
+        <svg width="120" height="120" viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r="50" fill="none" stroke="var(--line)" stroke-width="10"/>
+          <circle id="gaugeArc" cx="60" cy="60" r="50" fill="none" stroke="var(--safe)" stroke-width="10"
+            stroke-dasharray="314" stroke-dashoffset="314" stroke-linecap="round"
+            transform="rotate(-90 60 60)"/>
+        </svg>
+        <div class="gauge-num">
+          <b id="scoreNum">0</b>
+          <span>risk / 100</span>
+        </div>
+      </div>
+      <div class="verdict-text">
+        <p class="verdict-label" id="verdictLabel">—</p>
+        <p class="verdict-desc" id="verdictDesc">—</p>
+      </div>
+    </div>
+
+    <div class="flags">
+      <h3>What we found</h3>
+      <div id="flagList"></div>
+    </div>
+
+    <div class="advice" id="advice"></div>
+  </div>
+
+  <footer>
+    <p>All checks run locally in your browser — nothing you type is uploaded or stored.</p>
+    <p>This is a heuristic screening tool, not legal or professional advice. When in doubt, verify directly with the company through official channels.</p>
+  </footer>
+</div>
+
+<script>
+function analyze(){
+  const company = document.getElementById('company').value.trim();
+  const email = document.getElementById('email').value.trim().toLowerCase();
+  const desc = document.getElementById('desc').value.toLowerCase();
+
+  const flags = [];
+
+  // --- Checkbox-driven flags (explicit, high confidence) ---
+  if(document.getElementById('c_fee').checked)
+    flags.push({w:30, sev:'danger', title:'Fee or deposit requested', text:'Legitimate employers never ask candidates to pay to get hired. This is one of the strongest fraud signals.'});
+  if(document.getElementById('c_personal').checked)
+    flags.push({w:25, sev:'danger', title:'Sensitive personal or financial info requested early', text:'Bank details, card numbers, or ID documents should only be shared after a verified offer, through secure company HR systems.'});
+  if(document.getElementById('c_nointerview').checked)
+    flags.push({w:15, sev:'caution', title:'No interview or screening', text:'Real internships almost always involve at least a short screening call or task. Instant offers are a common scam pattern.'});
+  if(document.getElementById('c_whatsapp').checked)
+    flags.push({w:12, sev:'caution', title:'Only informal messaging channels used', text:'Genuine recruiters typically use a company email address, not only WhatsApp or Telegram.'});
+  if(document.getElementById('c_noweb').checked)
+    flags.push({w:12, sev:'caution', title:'No verifiable company presence', text:'A real company usually has a working website and an active LinkedIn page you can independently check.'});
+  if(document.getElementById('c_urgent').checked)
+    flags.push({w:10, sev:'caution', title:'Artificial urgency', text:'Pressure to act within hours is a classic tactic to stop people from verifying details first.'});
+
+  // --- Email domain check ---
+  const freeDomains = ['gmail.com','yahoo.com','outlook.com','rediffmail.com','hotmail.com','ymail.com'];
+  if(email){
+    const domain = email.split('@')[1] || '';
+    if(freeDomains.includes(domain)){
+      flags.push({w:15, sev:'caution', title:'Recruiter using a free email provider', text:'Official company recruitment usually comes from a company domain (like hr@companyname.com), not a personal Gmail or Yahoo address.'});
+    }
+  }
+
+  // --- Keyword scan on pasted description ---
+  const keywordChecks = [
+    {pattern:/(security deposit|registration fee|refundable amount|caution money|processing fee)/, w:30, sev:'danger', title:'Fee-related language detected in text', text:'The pasted text mentions a deposit or fee — a strong indicator of a paid-internship scam.'},
+    {pattern:/(guaranteed job|100% placement|earn.{0,15}(lakh|lakhs|₹\s?\d{4,})|no work.{0,10}earn)/, w:15, sev:'caution', title:'Unrealistic earning claims', text:'Promises of guaranteed jobs or unusually high pay for minimal work are commonly used to lure applicants.'},
+    {pattern:/(apply within 24 hours|limited seats|hurry|act now|offer expires today)/, w:10, sev:'caution', title:'Urgency language in the text', text:'Scam postings often create false time pressure to prevent candidates from checking details.'},
+    {pattern:/(send.{0,10}(otp|aadhar|pan card|bank account|upi))/, w:25, sev:'danger', title:'Request for sensitive data in text', text:'The message asks for confidential identity or payment information — never share this with an unverified recruiter.'},
+    {pattern:/(work from home).{0,20}(no interview|instant|immediate)/, w:12, sev:'caution', title:'"Work from home, no interview" pattern', text:'This exact combination is a frequently reused scam template.'}
+  ];
+  keywordChecks.forEach(k=>{
+    if(desc && k.pattern.test(desc)){
+      flags.push({w:k.w, sev:k.sev, title:k.title, text:k.text});
+    }
+  });
+
+  // vague/short description check
+  if(desc && desc.split(/\s+/).length < 12){
+    flags.push({w:8, sev:'caution', title:'Very little detail provided', text:'Legitimate postings usually describe responsibilities, duration, and stipend clearly. Vague descriptions make it harder to verify legitimacy.'});
+  }
+
+  // --- Score ---
+  let score = flags.reduce((sum,f)=>sum+f.w, 0);
+  score = Math.min(100, score);
+
+  let band, label, desc2, color;
+  if(score >= 70){ band='critical'; label='High risk'; color='var(--danger)'; desc2='Multiple strong fraud signals detected. Avoid sharing money or personal documents, and verify independently before proceeding.'; }
+  else if(score >= 40){ band='high'; label='Caution advised'; color='var(--danger)'; desc2='Several warning signs found. Verify the company directly through its official website or HR contact before taking any next step.'; }
+  else if(score >= 15){ band='medium'; label='Some concerns'; color='var(--caution)'; desc2='A few minor flags. Not necessarily a scam, but worth double-checking the basics before proceeding.'; }
+  else { band='low'; label='Looks reasonable'; color='var(--safe)'; desc2='No major red flags detected from what you entered. Still, always verify independently if something feels off.'; }
+
+  // --- Render ---
+  document.getElementById('results').style.display = 'block';
+  document.getElementById('scoreNum').textContent = score;
+  document.getElementById('verdictLabel').textContent = label;
+  document.getElementById('verdictLabel').style.color = color;
+  document.getElementById('verdictDesc').textContent = desc2;
+
+  const circumference = 314;
+  const offset = circumference - (score/100)*circumference;
+  const arc = document.getElementById('gaugeArc');
+  arc.style.stroke = color;
+  arc.setAttribute('stroke-dashoffset', offset);
+
+  const listEl = document.getElementById('flagList');
+  listEl.innerHTML = '';
+  if(flags.length === 0){
+    listEl.innerHTML = '<div class="no-flags">No red flags matched. Nothing you entered triggered a known fraud pattern.</div>';
+  } else {
+    flags.sort((a,b)=>b.w-a.w).forEach(f=>{
+      const dotColor = f.sev==='danger' ? 'var(--danger)' : 'var(--caution)';
+      const row = document.createElement('div');
+      row.className = 'flag-item';
+      row.innerHTML = `<div class="flag-dot" style="background:${dotColor}"></div>
+        <div style="flex:1"><b>${f.title}</b><p>${f.text}</p></div>
+        <div class="flag-weight">+${f.w}</div>`;
+      listEl.appendChild(row);
+    });
+  }
+
+  document.getElementById('advice').textContent = company
+    ? `Before proceeding with ${company}, confirm the offer directly through their official website, careers page, or a verified HR phone line — not just the contact who reached out to you.`
+    : `Whenever possible, confirm any offer directly through the company's official website or careers page — not just the contact who reached out to you.`;
+
+  document.getElementById('results').scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+document.getElementById('analyzeBtn').addEventListener('click', analyze);
+</script>
+</body>
+</html>
